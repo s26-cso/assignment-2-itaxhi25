@@ -100,10 +100,10 @@ getAtMost:
     mv a0,t1
     mv a1,s1
     call getAtMost
-    blt a0,x0,use_current   # if right returned -1, use current node's data
+    blt a0,x0,use_current
     beq x0,x0,end_atmost
 use_current:
-    mv a0,t0        # return node->data as best candidate
+    ld a0,0(s0)       # reload node->data from the saved node pointer
     beq x0,x0,end_atmost
 go_left:
     ld t1,8(s0)     # load left child
