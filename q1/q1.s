@@ -93,26 +93,32 @@ getAtMost:
     sd ra,24(sp)
     sd s0,16(sp)
     sd s1,8(sp)
-    mv s0,a0              
-    mv s1,a1             
-    beq s0,x0,atmost_not_found
+    mv s0,a0              # s0 = root
+    mv s1,a1              # s1 = val
+    beq s0,x0,atmost_null # root is NULL → return NULL
+
     lw t0,0(s0)           # t0 = root->val
-    blt s1,t0,atmost_go_left      # val < root->val → go left
-    # root->val <= val: candidate found, try right for closer value
-    ld a0,16(s0)        
-    mv a1,s1             
+    blt s1,t0,atmost_go_left  # val < root->val → must go left
+
+    # root->val <= val: current node is a candidate
+    # try right subtree for a closer (larger) value <= val
+    ld a0,16(s0)          # a0 = root->right
+    mv a1,s1              # a1 = val
     call getAtMost
-    bge a0,x0,atmost_end          # right returned valid value, use it
-atmost_use_current:
-    lw a0,0(s0)           # right had nothing better, return root->val
+    bne a0,x0,atmost_end  # right found a valid node, return it
+    # right returned NULL, so current node is the best candidate
+    mv a0,s0              # return current node
     beq x0,x0,atmost_end
+
 atmost_go_left:
-    ld a0,8(s0)           
-    mv a1,s1             
+    ld a0,8(s0)           # a0 = root->left
+    mv a1,s1              # a1 = val
     call getAtMost
-    beq x0,x0,atmost_end
-atmost_not_found:
-    addi a0,x0,-1         # return -1
+    beq x0,x0,atmost_end  # return whatever left subtree found (NULL or node)
+
+atmost_null:
+    mv a0,x0              # return NULL
+
 atmost_end:
     ld ra,24(sp)
     ld s0,16(sp)
