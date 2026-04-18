@@ -3,10 +3,11 @@
 .globl  insert
 .globl  get
 .globl  getAtMost
+
 make_node:
     addi sp,sp,-16
     sd ra,8(sp)
-    sd s0,0(sp) 
+    sd s0,0(sp)
     mv s0,a0
     addi a0,x0,24
     call malloc
@@ -34,8 +35,7 @@ insert:
     call insert
     sd a0,16(s0)
     mv a0,s0
-    beq x0,x0,end
-
+    beq x0,x0,insert_end
 insert_left:
     ld t1,8(s0)
     mv a0,t1
@@ -43,14 +43,11 @@ insert_left:
     call insert
     sd a0,8(s0)
     mv a0,s0
-    beq x0,x0,end
-
+    beq x0,x0,insert_end
 create:
     mv a0,s1
     call make_node
-    beq x0,x0,end
-
-end:
+insert_end:
     ld ra,24(sp)
     ld s0,16(sp)
     ld s1,8(sp)
@@ -64,32 +61,27 @@ get:
     sd s1,8(sp)
     mv s0,a0
     mv s1,a1
-    beq s0,x0,not_found
+    beq s0,x0,get_not_found
     lw t0,0(s0)
-    beq s1,t0,found
-    blt s1,t0,search_left
+    beq s1,t0,get_found
+    blt s1,t0,get_search_left
     ld t1,16(s0)
     mv a0,t1
     mv a1,s1
     call get
-    beq x0,x0,end_get
-
-not_found:
-    addi a0,x0,-1
-    beq x0,x0,end_get
-
-search_left:
+    beq x0,x0,get_end
+get_not_found:
+    mv a0,x0
+    beq x0,x0,get_end
+get_search_left:
     ld t1,8(s0)
     mv a0,t1
     mv a1,s1
     call get
-    beq x0,x0,end_get
-
-found:
-    addi a0,x0,1
-    beq x0,x0,end_get
-
-end_get:
+    beq x0,x0,get_end
+get_found:
+    mv a0,s0
+get_end:
     ld ra,24(sp)
     ld s0,16(sp)
     ld s1,8(sp)
@@ -101,33 +93,28 @@ getAtMost:
     sd ra,24(sp)
     sd s0,16(sp)
     sd s1,8(sp)
-    mv s0,a0
-    mv s1,a1
-    beq s0,x0,not_found_atmost
-    lw t0,0(s0)
-    blt s1,t0,go_left
-    ld t1,16(s0)
-    mv a0,t1
-    mv a1,s1
+    mv s0,a0              # s0 = val
+    mv s1,a1              # s1 = root
+    beq s1,x0,atmost_not_found
+    lw t0,0(s1)           # t0 = root->val
+    blt s0,t0,atmost_go_left
+    # root->val <= val: try right subtree for something greater
+    mv a0,s0
+    ld a1,16(s1)          # root->right
     call getAtMost
-    blt a0,x0,use_current
-    beq x0,x0,end_atmost
-
-use_current:
-    lw a0,0(s0)
-    beq x0,x0,end_atmost
-
-go_left:
-    ld t1,8(s0)
-    mv a0,t1
-    mv a1,s1
+    blt a0,x0,atmost_use_current   # right returned -1, use current node
+    beq x0,x0,atmost_end           # right found something, return it
+atmost_use_current:
+    lw a0,0(s1)           # return root->val
+    beq x0,x0,atmost_end
+atmost_go_left:
+    mv a0,s0
+    ld a1,8(s1)           # root->left
     call getAtMost
-    beq x0,x0,end_atmost
-
-not_found_atmost:
-    addi a0,x0,-1
-
-end_atmost:
+    beq x0,x0,atmost_end
+atmost_not_found:
+    addi a0,x0,-1         # return -1
+atmost_end:
     ld ra,24(sp)
     ld s0,16(sp)
     ld s1,8(sp)
