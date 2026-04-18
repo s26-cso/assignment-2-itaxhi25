@@ -124,8 +124,7 @@ print_loop:
     beq x0, x0, print_loop
 
 print_done:
-    la a0, fmt_newline
-    call printf                 # newline after all results
+
 
     li a0, 0                    # return 0
     ld ra, 56(sp)               # restore all saved registers
