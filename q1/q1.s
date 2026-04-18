@@ -95,26 +95,29 @@ getAtMost:
     sd s1,8(sp)
     mv s0,a0              # s0 = root
     mv s1,a1              # s1 = val
-    beq s0,x0,atmost_null # root is NULL → return NULL
+    beq s0,x0,atmost_null
 
-    lw t0,0(s0)           # t0 = root->val
-    blt s1,t0,atmost_go_left  # val < root->val → must go left
+    ld t0,0(s0)           # t0 = root->val
+    beq s1,t0,atmost_exact  # val == root->val → perfect match
+    blt s1,t0,atmost_go_left
 
-    # root->val <= val: current node is a candidate
-    # try right subtree for a closer (larger) value <= val
-    ld a0,16(s0)          # a0 = root->right
-    mv a1,s1              # a1 = val
+    # root->val < val: try right for something closer
+    ld a0,16(s0)
+    mv a1,s1
     call getAtMost
-    bne a0,x0,atmost_end  # right found a valid node, return it
-    # right returned NULL, so current node is the best candidate
-    mv a0,s0              # return current node
+    bne a0,x0,atmost_end  # right found valid node, return it
+    mv a0,s0              # right was NULL, return current node
+    beq x0,x0,atmost_end
+
+atmost_exact:
+    mv a0,s0              # exact match, return current node immediately
     beq x0,x0,atmost_end
 
 atmost_go_left:
-    ld a0,8(s0)           # a0 = root->left
-    mv a1,s1              # a1 = val
+    ld a0,8(s0)
+    mv a1,s1
     call getAtMost
-    beq x0,x0,atmost_end  # return whatever left subtree found (NULL or node)
+    beq x0,x0,atmost_end
 
 atmost_null:
     mv a0,x0              # return NULL
