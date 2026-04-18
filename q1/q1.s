@@ -93,23 +93,22 @@ getAtMost:
     sd ra,24(sp)
     sd s0,16(sp)
     sd s1,8(sp)
-    mv s0,a0              # s0 = val
-    mv s1,a1              # s1 = root
-    beq s1,x0,atmost_not_found
-    lw t0,0(s1)           # t0 = root->val
-    blt s0,t0,atmost_go_left
-    # root->val <= val: try right subtree for something greater
-    mv a0,s0
-    ld a1,16(s1)          # root->right
+    mv s0,a0              
+    mv s1,a1             
+    beq s0,x0,atmost_not_found
+    lw t0,0(s0)           # t0 = root->val
+    blt s1,t0,atmost_go_left      # val < root->val → go left
+    # root->val <= val: candidate found, try right for closer value
+    ld a0,16(s0)        
+    mv a1,s1             
     call getAtMost
-    blt a0,x0,atmost_use_current   # right returned -1, use current node
-    beq x0,x0,atmost_end           # right found something, return it
+    bge a0,x0,atmost_end          # right returned valid value, use it
 atmost_use_current:
-    lw a0,0(s1)           # return root->val
+    lw a0,0(s0)           # right had nothing better, return root->val
     beq x0,x0,atmost_end
 atmost_go_left:
-    mv a0,s0
-    ld a1,8(s1)           # root->left
+    ld a0,8(s0)           
+    mv a1,s1             
     call getAtMost
     beq x0,x0,atmost_end
 atmost_not_found:
